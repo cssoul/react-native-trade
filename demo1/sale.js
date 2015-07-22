@@ -253,7 +253,7 @@ var GridList = React.createClass({
         dataSource={state.dataSource}
         showsVerticalScrollIndicator={false}
         removeClippedSubviews={true}            //If I use this property, when I scroll listView to the bottom,
-                                                //then scroll back to the top, switch category, image of listView doesn't update.
+                                                //and then scroll back to the top、switch category, image of listView doesn't update.
 
         stickyHeaderIndices={[1]}               //It doesn't work
         onEndReached={this._onEndReached}
