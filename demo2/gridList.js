@@ -1,8 +1,7 @@
 'use strict';
 
 var React = require('react-native');
-var Banner = require('./banner');
-var Tabs = require('./tabs');
+
 var Dimensions = require('Dimensions');
 var {
   width, 
@@ -167,6 +166,7 @@ var MockData = [
 
 var ajaxUrl = "http://www.mogujie.com/act/mce/get_wall";
 
+
 var GridList = React.createClass({
 
   /**
@@ -175,7 +175,7 @@ var GridList = React.createClass({
   */
   propTypes: {
     ajaxUrl                          : React.PropTypes.string,
-    catId                            : React.PropTypes.number,
+    cateId                            : React.PropTypes.string,
     style                            : View.propTypes.style,
     column                           : React.PropTypes.number,
     itemWidth                        : React.PropTypes.number,
@@ -189,7 +189,7 @@ var GridList = React.createClass({
     let ch = props.itemHeight
 
     if(!props.itemWidth){
-      cw = (width-(column)*10)/column;
+      cw = (width-(column+1)*10)/column;
     }
 
     if(!props.itemHeight){
@@ -201,37 +201,45 @@ var GridList = React.createClass({
       loaded: false,
       itemWidth: cw,
       itemHeight: ch,
-      column: column,
-      cateId: '123y'
+      column: column
     };
   },
 
-  //更新分类ID
-  handleUpdateList(cateId) {
-    this.setState({
-        cateId : cateId
-    })
-    this.fetchData();
-  },
-
   componentDidMount() {
-    this.fetchData();
+    this.fetchData(this.props.cateId);
   },
 
-  fetchData() {
-    var cateId = this.state.cateId,
-        apiUrl = cateId ? ajaxUrl + '?mceId=' + this.state.cateId : ajaxUrl;
-
-    fetch(apiUrl)
-      .then((response) => response.json())
-      .then((responseData) => {
-        this.setState({
-            dataSource: this.state.dataSource.cloneWithRows(responseData.result.list),
-            loaded: true
-        });
-        this.cacheData = responseData.result.list;
+  componentWillReceiveProps(nextProps) {
+    //loading state
+    this.setState({
+        loaded : false
     })
-    .done();
+
+    this.fetchData(nextProps.cateId);
+  },
+
+
+  fetchData(cateId) {
+    //var cateId = this.state.cateId
+    if(!ajaxUrl) {
+      this.setState({
+          dataSource: this.state.dataSource.cloneWithRows(MockData),
+          loaded: true
+      });
+    }else{
+      var apiUrl = cateId ? ajaxUrl + '?mceId=' + cateId : ajaxUrl;
+   
+      fetch(apiUrl)
+          .then((response) => response.json())
+          .then((responseData) => {
+
+              this.setState({
+                  dataSource: this.state.dataSource.cloneWithRows(responseData.result.list),
+                  loaded: true
+              });
+        })
+        .done();
+    }
   },
 
 
@@ -239,57 +247,19 @@ var GridList = React.createClass({
     let state = this.state
     let props = this.props
 
-    var style = state.column>1 ? styles.column : {paddingVertical: 5};
+    var style = state.column>1 ? styles.column : {padding: 5};
 
     if(!state.loaded){
       return(
         <ActivityIndicatorIOS
-          style={[styles.centering, styles.gray, {height: 500}]} />
+          style={[styles.centering, styles.gray, {height: 400,paddingBottom:200}]} />
       );
     };
-
     return (
       <ListView contentContainerStyle={[style, props.style,{marginTop: -20}]}
         dataSource={state.dataSource}
-        showsVerticalScrollIndicator={false}
-        removeClippedSubviews={true}            //If I use this property, when I scroll listView to the bottom,
-                                                //and then scroll back to the top、switch category, image of listView doesn't update.
-
-        stickyHeaderIndices={[1]}               //It doesn't work
-        onEndReached={this._onEndReached}
-        renderHeader={this._renderHeader}
-        renderFooter={this._renderFooter}
-        renderRow={this._renderRow}>
-      </ListView>
-    );
-  },
-
-  _onEndReached() {
-    //加载更多数据，追加MockData到之前的cacheData上
-    var data = this.cacheData.concat(MockData);
-
-    this.setState({
-        dataSource: this.state.dataSource.cloneWithRows(data),
-        loaded: true
-    });
-  },
-
-  _renderHeader() {
-    return (
-      <View style={{width:width,marginTop:-10}}>
-        <Banner/>
-        <Tabs onChange={this.handleUpdateList}/>
-      </View>
-    );
-  },
-
-  _renderFooter() {
-    return (
-      <View style={{width:width,marginVertical:10}}>
-          <View style={[styles.moreBox, styles.centering]}>
-              <Text>查看更多...</Text>
-          </View>
-      </View>
+        scrollEnabled={false}
+        renderRow={this._renderRow} />
     );
   },
 
@@ -299,7 +269,7 @@ var GridList = React.createClass({
     return (
       <TouchableWithoutFeedback key={item.shopId}>
         <View ref='listRow'
-          style={[styles.row,{width:state.itemWidth, height:state.itemHeight+92} ]}>
+          style={[styles.row,{width:state.itemWidth, height:state.itemHeight+45} ]}>
             <Image source={{uri:item.img}}
               style={[styles.img,{ width:state.itemWidth, height:state.itemHeight}]} />
             <View style={styles.goodsInfoBoxView}>
@@ -309,9 +279,6 @@ var GridList = React.createClass({
                 <Text style={styles.price}>
                     {'￥'+item.nowPrice}
                 </Text>
-                <View style={styles.buyButton}>
-                    <Text style={styles.buyButtonText}>立即购买</Text>
-                </View>
             </View>
         </View>
       </TouchableWithoutFeedback>
@@ -320,31 +287,27 @@ var GridList = React.createClass({
 });
 
 var styles = StyleSheet.create({
-
   column: {
-    paddingVertical: 5,
+    paddingTop:5,
+    paddingBottom: 25,
+    paddingHorizontal: 5,
     flexDirection: 'row',
     flexWrap: 'wrap'
   },
   row: {
     margin: 5,
-    borderColor: '#CCC',
-    overflow: 'hidden',
-    borderWidth : 0.5,
-  },
-
-  goodsInfoBoxView: {
-    
+    backgroundColor: '#f6f6f6',
+    borderColor: '#ccc',
     overflow: 'hidden'
   },
 
   text: {
     flex: 1,
     marginTop: 2,
-    fontSize: 14,
+    fontSize: 12,
     padding: 3,
     color: '#666',
-    paddingLeft: 8,
+    paddingLeft: 5,
     paddingBottom: 0
   },
 
@@ -353,32 +316,13 @@ var styles = StyleSheet.create({
     marginTop: 5,
     color: '#ee4566',
     fontSize: 14,
-    paddingLeft: 8
-  },
-
-  buyButton: {
-    backgroundColor: '#ff4280',
-    margin: 8,
-    height : 30,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-
-  buyButtonText: {
-    fontSize: 16,
-    color: '#fff'
+    paddingLeft: 3
   },
 
   centering: {
     alignSelf:'center',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-
-  moreBox:{
-    width:140,
-    height:35,
-    backgroundColor:'#ccc'
   }
 
 });
