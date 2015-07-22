@@ -10,9 +10,10 @@ When I set ListView in ScrollView, I find some property of ListView has mistakes
 2、maby I write wrong styles, the price's position is not right, just like the picture shows.
 ![demo](error1.jpg)
 
-3、Occasionally, this crash would appear. it happening when I sliding page or click someting.
+3、Occasionally, this crash would appear. it happening when I sliding page or clicking someting.
 ![demo](error2.jpg)
 
 also, you can see the Tabs can't swipe to left or right.
+
 ![demo](error3.jpg)
 
